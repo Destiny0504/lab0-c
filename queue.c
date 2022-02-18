@@ -27,8 +27,9 @@ void q_free(struct list_head *l)
 {
     if (!l)
         return;
-    element_t *tmp_node = container_of(l, element_t, list);
-    while (l->next != l) {
+
+    element_t *tmp_node = container_of(l->next, element_t, list);
+    while (l->next != l || l->prev != l) {
         l = l->next;
         q_release_element(tmp_node);
     }
@@ -59,23 +60,23 @@ bool q_insert_head(struct list_head *head, char *s)
 
 /*
  * Attempt to insert element at tail of queue.
- * Return true if successful.
+ * Return true if successful.delete_mid
  * Return false if q is NULL or could not allocate space.
  * Argument s points to the string to be stored.
  * The function must explicitly allocate space and copy the string into it.
  */
 bool q_insert_tail(struct list_head *head, char *s)
 {
+    int s_len = sizeof(s);
     if (!head)
         return false;
 
     element_t *tmp_node = malloc(sizeof(element_t));
     tmp_node->value = malloc(sizeof(s));
+    memset(tmp_node->value, '\0', s_len);
     strncpy(tmp_node->value, s, strlen(s));
-    memset(tmp_node->value, '\0', strlen(tmp_node->value));
     INIT_LIST_HEAD(&tmp_node->list);
     list_add_tail(&tmp_node->list, head);
-    // free(tmp_node);
     return true;
 }
 
@@ -113,11 +114,16 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
  */
 element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
-    element_t *tmp = malloc(sizeof(element_t));
-    tmp->list = *head;
-    while (tmp->list.next != NULL) {
-    }
-    return NULL;
+    if (head->prev == head)
+        return NULL;
+
+    if (sp == NULL)
+        return NULL;
+
+    element_t *tmp_node = container_of(head->prev, element_t, list);
+    strncpy(sp, tmp_node->value, bufsize - 1);
+    list_del(head->prev);
+    return tmp_node;
 }
 
 /*
@@ -158,6 +164,21 @@ int q_size(struct list_head *head)
 bool q_delete_mid(struct list_head *head)
 {
     // https://leetcode.com/problems/delete-the-middle-node-of-a-linked-list/
+    if (head->next == head)
+        return false;
+
+    struct list_head *tmp = head->next;
+    int counter = 0;
+    if (q_size(head) % 2)
+        counter = (q_size(head) - 1) / 2;
+    else
+        counter = q_size(head) / 2;
+    for (; counter > 0; counter--) {
+        tmp = tmp->next;
+    }
+    list_del(tmp);
+    element_t *tmp_node = container_of(tmp, element_t, list);
+    q_release_element(tmp_node);
     return true;
 }
 
