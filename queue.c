@@ -17,11 +17,23 @@
  */
 struct list_head *q_new()
 {
-    return NULL;
+    struct list_head *head = malloc(sizeof(struct list_head));
+    INIT_LIST_HEAD(head);
+    return head;
 }
 
 /* Free all storage used by queue */
-void q_free(struct list_head *l) {}
+void q_free(struct list_head *l)
+{
+    if (!l)
+        return;
+    element_t *tmp_node = container_of(l, element_t, list);
+    while (l->next != l) {
+        l = l->next;
+        q_release_element(tmp_node);
+    }
+    free(l);
+}
 
 /*
  * Attempt to insert element at head of queue.
@@ -32,6 +44,16 @@ void q_free(struct list_head *l) {}
  */
 bool q_insert_head(struct list_head *head, char *s)
 {
+    int s_len = sizeof(s);
+    if (!head)
+        return false;
+
+    element_t *tmp_node = malloc(sizeof(element_t));
+    tmp_node->value = malloc(sizeof(s));
+    memset(tmp_node->value, '\0', s_len);
+    strncpy(tmp_node->value, s, strlen(s));
+    INIT_LIST_HEAD(&tmp_node->list);
+    list_add(&tmp_node->list, head);
     return true;
 }
 
@@ -44,6 +66,16 @@ bool q_insert_head(struct list_head *head, char *s)
  */
 bool q_insert_tail(struct list_head *head, char *s)
 {
+    if (!head)
+        return false;
+
+    element_t *tmp_node = malloc(sizeof(element_t));
+    tmp_node->value = malloc(sizeof(s));
+    strncpy(tmp_node->value, s, strlen(s));
+    memset(tmp_node->value, '\0', strlen(tmp_node->value));
+    INIT_LIST_HEAD(&tmp_node->list);
+    list_add_tail(&tmp_node->list, head);
+    // free(tmp_node);
     return true;
 }
 
@@ -63,7 +95,16 @@ bool q_insert_tail(struct list_head *head, char *s)
  */
 element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 {
-    return NULL;
+    if (head->next == head)
+        return NULL;
+
+    if (sp == NULL)
+        return NULL;
+
+    element_t *tmp_node = container_of(head->next, element_t, list);
+    strncpy(sp, tmp_node->value, bufsize - 1);
+    list_del(head->next);
+    return tmp_node;
 }
 
 /*
@@ -72,6 +113,10 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
  */
 element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
+    element_t *tmp = malloc(sizeof(element_t));
+    tmp->list = *head;
+    while (tmp->list.next != NULL) {
+    }
     return NULL;
 }
 
@@ -91,7 +136,15 @@ void q_release_element(element_t *e)
  */
 int q_size(struct list_head *head)
 {
-    return -1;
+    if (!head)
+        return 0;
+
+    int len = 0;
+    struct list_head *li;
+
+    list_for_each (li, head)
+        len++;
+    return len;
 }
 
 /*
