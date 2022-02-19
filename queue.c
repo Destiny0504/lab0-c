@@ -45,14 +45,14 @@ void q_free(struct list_head *l)
  */
 bool q_insert_head(struct list_head *head, char *s)
 {
-    int s_len = sizeof(s);
+    int s_len = sizeof(char) * strlen(s) + 1;
     if (!head)
         return false;
 
     element_t *tmp_node = malloc(sizeof(element_t));
-    tmp_node->value = malloc(sizeof(s));
-    memset(tmp_node->value, '\0', s_len);
-    strncpy(tmp_node->value, s, strlen(s));
+    tmp_node->value = malloc(s_len);
+    memset(tmp_node->value, 0, s_len);
+    strncpy(tmp_node->value, s, strlen(s) + 1);
     INIT_LIST_HEAD(&tmp_node->list);
     list_add(&tmp_node->list, head);
     return true;
@@ -67,14 +67,14 @@ bool q_insert_head(struct list_head *head, char *s)
  */
 bool q_insert_tail(struct list_head *head, char *s)
 {
-    int s_len = sizeof(s);
+    int s_len = sizeof(char) * strlen(s) + 1;
     if (!head)
         return false;
 
     element_t *tmp_node = malloc(sizeof(element_t));
-    tmp_node->value = malloc(sizeof(s));
-    memset(tmp_node->value, '\0', s_len);
-    strncpy(tmp_node->value, s, strlen(s));
+    tmp_node->value = malloc(s_len);
+    memset(tmp_node->value, 0, s_len);
+    strncpy(tmp_node->value, s, strlen(s) + 1);
     INIT_LIST_HEAD(&tmp_node->list);
     list_add_tail(&tmp_node->list, head);
     return true;
@@ -212,7 +212,18 @@ void q_swap(struct list_head *head)
  * (e.g., by calling q_insert_head, q_insert_tail, or q_remove_head).
  * It should rearrange the existing ones.
  */
-void q_reverse(struct list_head *head) {}
+void q_reverse(struct list_head *head)
+{
+    if (!head || list_empty(head))
+        return;
+
+    struct list_head *tmp = NULL, *next = head;
+    for (; tmp != head; next = tmp) {
+        tmp = next->next;
+        next->next = next->prev;
+        next->prev = tmp;
+    }
+}
 
 /*
  * Sort elements of queue in ascending order
