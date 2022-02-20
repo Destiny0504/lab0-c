@@ -18,6 +18,8 @@
 struct list_head *q_new()
 {
     struct list_head *head = malloc(sizeof(struct list_head));
+    if (!head)
+        return NULL;
     INIT_LIST_HEAD(head);
     return head;
 }
@@ -45,11 +47,14 @@ void q_free(struct list_head *l)
  */
 bool q_insert_head(struct list_head *head, char *s)
 {
-    int s_len = sizeof(char) * strlen(s) + 1;
     if (!head)
         return false;
 
     element_t *tmp_node = malloc(sizeof(element_t));
+    if (!tmp_node)
+        return false;
+
+    int s_len = sizeof(char) * strlen(s) + 1;
     tmp_node->value = malloc(s_len);
     memset(tmp_node->value, 0, s_len);
     strncpy(tmp_node->value, s, strlen(s) + 1);
@@ -72,6 +77,10 @@ bool q_insert_tail(struct list_head *head, char *s)
         return false;
 
     element_t *tmp_node = malloc(sizeof(element_t));
+
+    if (!tmp_node)
+        return false;
+
     tmp_node->value = malloc(s_len);
     memset(tmp_node->value, 0, s_len);
     strncpy(tmp_node->value, s, strlen(s) + 1);
@@ -96,14 +105,12 @@ bool q_insert_tail(struct list_head *head, char *s)
  */
 element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 {
-    if (head->next == head)
-        return NULL;
-
-    if (sp == NULL)
+    if (!head || list_empty(head))
         return NULL;
 
     element_t *tmp_node = container_of(head->next, element_t, list);
-    strncpy(sp, tmp_node->value, bufsize - 1);
+    if (sp)
+        strncpy(sp, tmp_node->value, bufsize - 1);
     list_del(head->next);
     return tmp_node;
 }
@@ -114,7 +121,7 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
  */
 element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
-    if (head->prev == head)
+    if (list_empty(head))
         return NULL;
 
     if (sp == NULL)
@@ -203,6 +210,18 @@ bool q_delete_dup(struct list_head *head)
 void q_swap(struct list_head *head)
 {
     // https://leetcode.com/problems/swap-nodes-in-pairs/
+    if (!head || list_empty(head))
+        return;
+
+    struct list_head *cur = head, *cur_next = head->next,
+                     *cur_next_next = head->next->next;
+    // swapping the data
+    for (; cur != head; cur = cur->next->next) {
+        cur->next = cur_next_next;
+        cur_next_next->prev = cur_next;
+        cur_next->prev = cur_next_next;
+        cur_next->next = cur_next_next->next;
+    }
 }
 
 /*
@@ -218,6 +237,7 @@ void q_reverse(struct list_head *head)
         return;
 
     struct list_head *tmp = NULL, *next = head;
+    // swapping the data
     for (; tmp != head; next = tmp) {
         tmp = next->next;
         next->next = next->prev;
@@ -230,4 +250,10 @@ void q_reverse(struct list_head *head)
  * No effect if q is NULL or empty. In addition, if q has only one
  * element, do nothing.
  */
-void q_sort(struct list_head *head) {}
+void q_sort(struct list_head *head)
+{
+    if (!head || list_is_singular(head) || list_empty(head))
+        return;
+
+
+}
