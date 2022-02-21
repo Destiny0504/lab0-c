@@ -107,8 +107,11 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
         return NULL;
 
     element_t *tmp_node = container_of(head->next, element_t, list);
-    if (sp)
+    if (sp) {
+        /* avoid to delete a string which is longer than the given bufsize */
         strncpy(sp, tmp_node->value, bufsize - 1);
+        sp[bufsize - 1] = '\0';
+    }
     list_del(head->next);
     return tmp_node;
 }
@@ -126,7 +129,11 @@ element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
         return NULL;
 
     element_t *tmp_node = container_of(head->prev, element_t, list);
-    strncpy(sp, tmp_node->value, bufsize - 1);
+    if (sp) {
+        /* avoid to delete a string which is longer than the given bufsize */
+        strncpy(sp, tmp_node->value, bufsize - 1);
+        sp[bufsize - 1] = '\0';
+    }
     list_del(head->prev);
     return tmp_node;
 }
@@ -263,7 +270,64 @@ void q_reverse(struct list_head *head)
         next->prev = tmp;
     }
 }
+struct list_head *merge(struct list_head *l1, struct list_head *l2)
+{
+    struct list_head *tmp = NULL, *head = NULL;
 
+    if (strcmp(list_entry(l1, element_t, list)->value,
+               list_entry(l2, element_t, list)->value) < 0) {
+        tmp = l1;
+        head = l1;
+        l1 = l1->next;
+    } else {
+        tmp = l2;
+        head = l2;
+        l2 = l2->next;
+    }
+
+    while (l1 && l2) {
+        if (strcmp(list_entry(l1, element_t, list)->value,
+                   list_entry(l2, element_t, list)->value) < 0) {
+            tmp->next = l1;
+            tmp = tmp->next;
+            l1 = l1->next;
+        } else {
+            tmp->next = l2;
+            tmp = tmp->next;
+            l2 = l2->next;
+        }
+    }
+    if (l1)
+        tmp->next = l1;
+    if (l2)
+        tmp->next = l2;
+    return head;
+}
+
+struct list_head *mergesort(struct list_head *head)
+{
+    // merge sort
+    if (!head || !head->next)
+        return head;
+
+    struct list_head *fast = head->next;
+    struct list_head *slow = head;
+
+    // split list
+    while (fast && fast->next) {
+        slow = slow->next;
+        fast = fast->next->next;
+    }
+    fast = slow->next;
+    slow->next = NULL;
+
+    // sort each list
+    struct list_head *l1 = mergesort(head);
+    struct list_head *l2 = mergesort(fast);
+
+    // merge sorted l1 and sorted l2
+    return merge(l1, l2);
+}
 /*
  * Sort elements of queue in ascending order
  * No effect if q is NULL or empty. In addition, if q has only one
@@ -274,5 +338,15 @@ void q_sort(struct list_head *head)
     if (!head || list_is_singular(head) || list_empty(head))
         return;
 
-
+    struct list_head *cur = NULL;
+    head->prev->next = NULL;
+    head->next = mergesort(head->next);
+    head->next->prev = head;
+    list_for_each (cur, head) {
+        if (!cur->next) {
+            cur->next = head;
+            cur->next->prev = cur;
+        } else
+            cur->next->prev = cur;
+    }
 }
