@@ -54,6 +54,11 @@ bool q_insert_head(struct list_head *head, char *s)
 
     int s_len = sizeof(char) * strlen(s) + 1;
     tmp_node->value = malloc(s_len);
+    if (!tmp_node->value) {
+        q_release_element(tmp_node);
+        return false;
+    }
+
     memset(tmp_node->value, 0, s_len);
     strncpy(tmp_node->value, s, strlen(s) + 1);
     INIT_LIST_HEAD(&tmp_node->list);
@@ -70,7 +75,6 @@ bool q_insert_head(struct list_head *head, char *s)
  */
 bool q_insert_tail(struct list_head *head, char *s)
 {
-    int s_len = sizeof(char) * strlen(s) + 1;
     if (!head)
         return false;
 
@@ -79,7 +83,13 @@ bool q_insert_tail(struct list_head *head, char *s)
     if (!tmp_node)
         return false;
 
+    int s_len = sizeof(char) * strlen(s) + 1;
     tmp_node->value = malloc(s_len);
+    if (!tmp_node->value) {
+        q_release_element(tmp_node);
+        return false;
+    }
+
     memset(tmp_node->value, 0, s_len);
     strncpy(tmp_node->value, s, strlen(s) + 1);
     INIT_LIST_HEAD(&tmp_node->list);
@@ -123,9 +133,6 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
     if (list_empty(head))
-        return NULL;
-
-    if (sp == NULL)
         return NULL;
 
     element_t *tmp_node = container_of(head->prev, element_t, list);
