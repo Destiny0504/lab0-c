@@ -27,14 +27,12 @@ struct list_head *q_new()
 /* Free all storage used by queue */
 void q_free(struct list_head *l)
 {
-    if (!l)
+    if (l == NULL)
         return;
 
-    element_t *tmp_node = container_of(l->next, element_t, list);
-    while (l->next != l || l->prev != l) {
-        l = l->next;
-        q_release_element(tmp_node);
-    }
+    element_t *cur_node = NULL, *next_node = NULL;
+    list_for_each_entry_safe (cur_node, next_node, l, list)
+        q_release_element(cur_node);
     free(l);
 }
 
@@ -201,7 +199,26 @@ bool q_delete_mid(struct list_head *head)
 bool q_delete_dup(struct list_head *head)
 {
     // https://leetcode.com/problems/remove-duplicates-from-sorted-list-ii/
-    return true;
+    if (!head)
+        return false;
+
+    if (list_is_singular(head))
+        return true;
+
+    struct list_head *cur = head->next, *cur_next = cur->next;
+    element_t *cur_node = NULL;
+    for (;;) {
+        if (strcmp(list_entry(cur, element_t, list)->value,
+                   list_entry(cur_next, element_t, list)->value) == 0) {
+            list_del(cur);
+            cur_node = list_entry(cur, element_t, list);
+            q_release_element(cur_node);
+        }
+        cur = cur_next;
+        if (cur->next == head)
+            return true;
+        cur_next = cur->next;
+    }
 }
 
 /*
@@ -213,14 +230,16 @@ void q_swap(struct list_head *head)
     if (!head || list_empty(head))
         return;
 
-    struct list_head *cur = head, *cur_next = head->next,
-                     *cur_next_next = head->next->next;
+    struct list_head *cur = head->next, *cur_next = cur->next;
     // swapping the data
-    for (; cur != head; cur = cur->next->next) {
-        cur->next = cur_next_next;
-        cur_next_next->prev = cur_next;
-        cur_next->prev = cur_next_next;
-        cur_next->next = cur_next_next->next;
+    for (; cur_next != head && cur != head;
+         cur = cur->next, cur_next = cur->next) {
+        cur->prev->next = cur_next;
+        cur_next->next->prev = cur;
+        cur_next->prev = cur->prev;
+        cur->next = cur_next->next;
+        cur_next->next = cur;
+        cur->prev = cur_next;
     }
 }
 
