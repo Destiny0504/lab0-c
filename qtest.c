@@ -46,6 +46,8 @@
  * and whether cautious mode is used when freeing the queue
  */
 #define BIG_LIST 30
+void q_shuffle(struct list_head *head);
+
 static int big_list_size = BIG_LIST;
 
 
