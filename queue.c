@@ -365,7 +365,7 @@ void q_shuffle(struct list_head *head)
 
     // First, we have to know how long is the linked list
     int len = q_size(head);
-    struct list_head **indirect = &head->next;
+    struct list_head **indirect = NULL;
 
     while (len) {
         int random = rand() % len;
