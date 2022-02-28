@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "harness.h"
 #include "queue.h"
@@ -355,5 +356,25 @@ void q_sort(struct list_head *head)
             cur->next->prev = cur;
         } else
             cur->next->prev = cur;
+    }
+}
+
+void q_shuffle(struct list_head *head)
+{
+    srand(time(NULL));
+
+    // First, we have to know how long is the linked list
+    int len = q_size(head);
+    struct list_head **indirect = &head->next;
+
+    while (len) {
+        int random = rand() % len;
+        indirect = &head->next;
+
+        while (random--)
+            indirect = &(*indirect)->next;
+
+        list_move_tail(*indirect, head);
+        len--;
     }
 }
